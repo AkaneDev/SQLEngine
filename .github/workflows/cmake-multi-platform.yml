@@ -24,13 +24,18 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install -y build-essential libsdl2-dev libsqlite3-dev cmake
+          sudo apt install -y \
+            build-essential \
+            libsdl2-dev \
+            libsqlite3-dev \
+            cmake \
+            ninja-build
 
       - name: Install dependencies (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           brew update
-          brew install sdl2 sqlite3 cmake
+          brew install sdl2 sqlite3 cmake ninja
 
       - name: Setup MSYS2 (Windows)
         if: matrix.os == 'windows-latest'
@@ -41,34 +46,29 @@ jobs:
           install: >
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
             mingw-w64-x86_64-SDL2
             mingw-w64-x86_64-sqlite3
-            make
 
       # ---------------- CONFIGURE ----------------
       - name: Configure CMake (Linux/macOS)
         if: matrix.os != 'windows-latest'
         run: |
-          mkdir -p build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release
 
       - name: Configure CMake (Windows)
         if: matrix.os == 'windows-latest'
         shell: msys2 {0}
         run: |
-          mkdir -p build
-          cd build
-          cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/mingw64
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=/mingw64
 
       # ---------------- BUILD ----------------
-      - name: Build (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        run: cmake --build build --config Release
-
-      - name: Build (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: msys2 {0}
+      - name: Build
         run: cmake --build build
 
       # ---------------- PACKAGE ----------------
@@ -78,7 +78,6 @@ jobs:
           mkdir -p dist
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             cp build/sqlEngine.exe dist/sqlEngine-windows.exe
-            # Copy DLLs from MSYS2 MinGW64 path
             cp /c/msys64/mingw64/bin/SDL2.dll dist/
             cp /c/msys64/mingw64/bin/libsqlite3-0.dll dist/
           elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
