@@ -73,6 +73,11 @@ jobs:
       # ---------------- BUILD ----------------
       - name: Build
         run: cmake --build build
+      
+      - name: Install zip in MSYS2
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: pacman -Sy --noconfirm zip
 
       # ---------------- PACKAGE ----------------
       - name: Package binaries (Windows)
@@ -83,7 +88,13 @@ jobs:
           cp build/sqlEngine.exe dist/sqlEngine-windows.exe
           cp /mingw64/bin/SDL*.dll dist/
           cp /mingw64/bin/libsqlite3-0.dll dist/
-          zip -j dist/sqlEngine-windows.zip dist/*
+
+      - name: Zip Windows build
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: |
+          cd dist
+          zip -r sqlEngine-windows.zip sqlEngine-windows.exe SDL*.dll libsqlite3-0.dll
 
       - name: Package binaries (Linux/macOS)
         if: matrix.os != 'windows-latest'
@@ -97,9 +108,9 @@ jobs:
           fi
 
 
-upload-examples:
+  upload-examples:
     needs: build
-    runs-on: ubuntu-latest   # Just pick one OS, Linux is simplest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -112,7 +123,6 @@ upload-examples:
         with:
           name: SQLEngine-examples
           path: examples.zip
-
 
   release:
     name: Create GitHub Release
