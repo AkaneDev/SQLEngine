@@ -2,13 +2,16 @@ name: Build & Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
   build:
     name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -16,27 +19,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ---------- Linux ----------
-      - name: Install deps (Linux)
+      # ---------------- LINUX ----------------
+      - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt update && sudo apt install -y build-essential libsdl2-dev
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential libsdl2-dev
 
-      # ---------- macOS ----------
-      - name: Install deps (macOS)
+      # ---------------- macOS ----------------
+      - name: Install dependencies (macOS)
         if: matrix.os == 'macos-latest'
-        run: brew install sdl2
+        run: |
+          brew update
+          brew install sdl2
 
-      # ---------- Windows (MSYS2) ----------
-      - name: Install deps (Windows)
+      # ---------------- WINDOWS (MSYS2) ----------------
+      - name: Setup MSYS2 (Windows)
         if: matrix.os == 'windows-latest'
         uses: msys2/setup-msys2@v2
         with:
+          update: true
           install: >
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-SDL2
             make
 
-      - name: Build (Unix)
+      # ---------------- BUILD ----------------
+      - name: Build (Linux/macOS)
         if: matrix.os != 'windows-latest'
         run: make
 
@@ -45,9 +54,10 @@ jobs:
         shell: msys2 {0}
         run: make
 
-      - name: Package
+      # ---------------- PACKAGE ----------------
+      - name: Package binaries
         run: |
-          mkdir dist
+          mkdir -p dist
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp sqlEngine.exe dist/sqlEngine-windows.exe
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
@@ -56,8 +66,27 @@ jobs:
             cp sqlEngine dist/sqlEngine-linux
           fi
 
-      - name: Upload artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: sqlEngine-${{ matrix.os }}
           path: dist/*
+  
+  release:
+    name: Create GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
