@@ -56,12 +56,14 @@ jobs:
 
       # ---------------- CONFIGURE ----------------
       - name: Configure CMake
-        run: |
-          cmake -S . -B build \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            ${MATRIX_OS:+'-DCMAKE_PREFIX_PATH=/mingw64'}
         shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/mingw64
+          else
+            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          fi
+
 
       # ---------------- BUILD ----------------
       - name: Build
