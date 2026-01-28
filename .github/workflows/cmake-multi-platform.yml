@@ -52,34 +52,31 @@ jobs:
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-SDL2
             mingw-w64-x86_64-sqlite3
+            zip
 
       # ---------------- CONFIGURE ----------------
-      - name: Configure CMake (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cmake -S . -B build \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release
-
-      - name: Configure CMake (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: msys2 {0}
+      - name: Configure CMake
         run: |
           cmake -S . -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH=/mingw64
+            ${MATRIX_OS:+'-DCMAKE_PREFIX_PATH=/mingw64'}
+        shell: bash
 
       # ---------------- BUILD ----------------
       - name: Build
         run: cmake --build build
-      
-      - name: Install zip in MSYS2
-        if: matrix.os == 'windows-latest'
-        shell: msys2 {0}
-        run: pacman -Sy --noconfirm zip
 
       # ---------------- PACKAGE ----------------
+      - name: Package binaries (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          mkdir -p dist
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            cp build/sqlEngine dist/sqlEngine-macos
+          else
+            cp build/sqlEngine dist/sqlEngine-linux
+
       - name: Package binaries (Windows)
         if: matrix.os == 'windows-latest'
         shell: msys2 {0}
@@ -91,22 +88,20 @@ jobs:
 
       - name: Zip Windows build
         if: matrix.os == 'windows-latest'
-        shell: msys2 {0}
+        shell: powershell
         run: |
-          cd dist
-          zip -r sqlEngine-windows.zip sqlEngine-windows.exe SDL*.dll libsqlite3-0.dll
+          Compress-Archive -Path dist\sqlEngine-windows.exe,dist\SDL2.dll,dist\libsqlite3-0.dll `
+                           -DestinationPath dist\sqlEngine-windows.zip
 
-      - name: Package binaries (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        shell: bash
-        run: |
-          mkdir -p dist
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            cp build/sqlEngine dist/sqlEngine-macos
-          else
-            cp build/sqlEngine dist/sqlEngine-linux
-          fi
-
+      # ---------------- UPLOAD ARTIFACTS ----------------
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqlEngine-${{ matrix.os }}
+          path: |
+            dist/sqlEngine-linux
+            dist/sqlEngine-macos
+            dist/sqlEngine-windows.zip
 
   upload-examples:
     needs: build
@@ -126,7 +121,7 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: build
+    needs: [build, upload-examples]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
 
