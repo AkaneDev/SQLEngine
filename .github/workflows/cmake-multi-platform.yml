@@ -83,6 +83,7 @@ jobs:
           cp build/sqlEngine.exe dist/sqlEngine-windows.exe
           cp /mingw64/bin/SDL*.dll dist/
           cp /mingw64/bin/libsqlite3-0.dll dist/
+          zip -j dist/sqlEngine-windows.zip dist/*
 
       - name: Package binaries (Linux/macOS)
         if: matrix.os != 'windows-latest'
