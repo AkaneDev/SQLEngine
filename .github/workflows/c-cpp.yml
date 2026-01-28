@@ -2,9 +2,9 @@ name: C/C++ CI & Release
 
 on:
   push:
-    branches: [ "main" ]
+    tags: ["v*"]   # trigger on version tags
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -25,37 +25,34 @@ jobs:
             ext: zip
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install build tools and SDL2 (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: sudo apt update && sudo apt install -y build-essential libsdl2-dev
+      # Install SDL
+      - uses: libsdl-org/setup-sdl@main
+        id: sdl
+        with:
+          version: "2-latest"  # install latest SDL2
 
-    - name: Install build tools and SDL2 (macOS)
-      if: matrix.os == 'macos-latest'
-      run: brew install make sdl2
+      # Build
+      - name: Build
+        run: make
 
-    - name: Install build tools and SDL2 (Windows)
-      if: matrix.os == 'windows-latest'
-      run: choco install make sdl2 -y
+      # Package
+      - name: Package
+        run: |
+          mkdir -p release
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            zip -r release/game-${{ matrix.os }}.${{ matrix.ext }} sqlEngine.exe
+          else
+            tar czf release/game-${{ matrix.os }}.${{ matrix.ext }} sqlEngine
+          fi
 
-    - name: Build
-      run: make
-
-    - name: Package
-      run: |
-        mkdir -p release
-        if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          zip -r release/game-${{ matrix.os }}.${{ matrix.ext }} sqlEngine.exe
-        else
-          tar czf release/game-${{ matrix.os }}.${{ matrix.ext }} sqlEngine
-        fi
-
-    - name: Upload release asset
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v1.0.0
-        name: game-${{ matrix.os }}.${{ matrix.ext }}
-        asset_path: release/game-${{ matrix.os }}.${{ matrix.ext }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Upload to GitHub Releases
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: game-${{ matrix.os }}.${{ matrix.ext }}
+          asset_path: release/game-${{ matrix.os }}.${{ matrix.ext }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
