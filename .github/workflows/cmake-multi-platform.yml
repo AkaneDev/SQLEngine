@@ -72,19 +72,26 @@ jobs:
         run: cmake --build build
 
       # ---------------- PACKAGE ----------------
-      - name: Package binaries
+      - name: Package binaries (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: |
+          mkdir -p dist
+          cp build/sqlEngine.exe dist/sqlEngine-windows.exe
+          cp /mingw64/bin/SDL*.dll dist/
+          cp /mingw64/bin/libsqlite3-0.dll dist/
+
+      - name: Package binaries (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         shell: bash
         run: |
           mkdir -p dist
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            cp build/sqlEngine.exe dist/sqlEngine-windows.exe
-            cp /c/msys64/mingw64/bin/SDL*.dll dist/
-            cp /c/msys64/mingw64/bin/libsqlite3-0.dll dist/
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
             cp build/sqlEngine dist/sqlEngine-macos
           else
             cp build/sqlEngine dist/sqlEngine-linux
           fi
+
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
