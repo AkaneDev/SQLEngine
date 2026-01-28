@@ -2,6 +2,7 @@
 A game engine written in CPP with the game scripts written in SQL
 The game screen is a simple 32 by 32 monochrome screen in a database table
 The game data is saved to {GameName}.db, along with screendata
+[![C/C++ CI & Release](https://github.com/AkaneDev/SQLEngine/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/AkaneDev/SQLEngine/actions/workflows/c-cpp.yml)
 
 ## How to write your game
 This engine is mono threaded due to me not wanting to deal with trying to load and run multiple sql 'scripts'
