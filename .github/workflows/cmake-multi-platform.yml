@@ -97,11 +97,22 @@ jobs:
           fi
 
 
-      - name: Upload build artifact
+upload-examples:
+    needs: build
+    runs-on: ubuntu-latest   # Just pick one OS, Linux is simplest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create ZIP of examples
+        run: |
+          zip -r examples.zip examples
+
+      - name: Upload examples artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sqlEngine-${{ matrix.os }}
-          path: dist/*
+          name: SQLEngine-examples
+          path: examples.zip
+
 
   release:
     name: Create GitHub Release
