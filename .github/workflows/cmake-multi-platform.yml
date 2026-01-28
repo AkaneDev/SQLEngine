@@ -78,19 +78,21 @@ jobs:
           mkdir -p dist
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             cp build/sqlEngine.exe dist/sqlEngine-windows.exe
-            cp /mingw64/bin/SDL2.dll dist/
-            cp /mingw64/bin/libsqlite3-0.dll dist/
+            # Use the actual MSYS2 mingw64 path
+            cp /c/msys64/mingw64/bin/SDL2.dll dist/
+            cp /c/msys64/mingw64/bin/libsqlite3-0.dll dist/
           elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
             cp build/sqlEngine dist/sqlEngine-macos
           else
             cp build/sqlEngine dist/sqlEngine-linux
           fi
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: sqlEngine-${{ matrix.os }}
-          path: dist/*
+
+            - name: Upload build artifact
+              uses: actions/upload-artifact@v4
+              with:
+                name: sqlEngine-${{ matrix.os }}
+                path: dist/*
 
   release:
     name: Create GitHub Release
