@@ -24,38 +24,52 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install -y build-essential libsdl2-dev
+          sudo apt install -y build-essential libsdl2-dev sqlite3
 
       # ---------------- macOS ----------------
       - name: Install dependencies (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           brew update
-          brew install sdl2
+          brew install sdl2 sqlite3
 
-      # ---------------- WINDOWS (MSYS2) ----------------
+      # ---------------- WINDOWS (MSYS2 / MINGW64) ----------------
       - name: Setup MSYS2 (Windows)
         if: matrix.os == 'windows-latest'
         uses: msys2/setup-msys2@v2
         with:
+          msystem: MINGW64
           update: true
           install: >
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-SDL2
+            mingw-w64-x86_64-sqlite3
             make
 
       # ---------------- BUILD ----------------
-      - name: Build (Linux/macOS)
-        if: matrix.os != 'windows-latest'
+      - name: Build (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: make
+
+      - name: Build (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          export PATH="/opt/homebrew/bin:$PATH"
+          make
 
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
         shell: msys2 {0}
+        env:
+          MSYSTEM: MINGW64
+          CXX: x86_64-w64-mingw32-g++
+          CXXFLAGS: -std=c++17 -O2 -Iinclude -I/mingw64/include
+          LDFLAGS: -L/mingw64/lib -lSDL2 -lsqlite3
         run: make
 
       # ---------------- PACKAGE ----------------
       - name: Package binaries
+        shell: bash
         run: |
           mkdir -p dist
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
@@ -71,7 +85,7 @@ jobs:
         with:
           name: sqlEngine-${{ matrix.os }}
           path: dist/*
-  
+
   release:
     name: Create GitHub Release
     needs: build
