@@ -27,20 +27,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install build tools
+    - name: Install build tools and SDL2 (Linux)
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt update && sudo apt install -y build-essential
+      run: sudo apt update && sudo apt install -y build-essential libsdl2-dev
 
-    - name: Install build tools
+    - name: Install build tools and SDL2 (macOS)
       if: matrix.os == 'macos-latest'
-      run: brew install make
+      run: brew install make sdl2
 
-    - name: Install build tools
+    - name: Install build tools and SDL2 (Windows)
       if: matrix.os == 'windows-latest'
-      run: choco install make -y
+      run: choco install make sdl2 -y
 
     - name: Build
-      run: make -j$(nproc)
+      run: make
 
     - name: Package
       run: |
