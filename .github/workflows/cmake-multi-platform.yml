@@ -32,7 +32,7 @@ jobs:
           brew update
           brew install sdl2 sqlite3 cmake
 
-      - name: Setup MSYS2 for Windows
+      - name: Setup MSYS2 (Windows)
         if: matrix.os == 'windows-latest'
         uses: msys2/setup-msys2@v2
         with:
@@ -46,18 +46,34 @@ jobs:
             make
 
       # ---------------- CONFIGURE ----------------
-      - name: Configure CMake
+      - name: Configure CMake (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         run: |
           mkdir -p build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release
 
+      - name: Configure CMake (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/mingw64
+
       # ---------------- BUILD ----------------
-      - name: Build
+      - name: Build (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         run: cmake --build build --config Release
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: cmake --build build
 
       # ---------------- PACKAGE ----------------
       - name: Package binaries
+        shell: bash
         run: |
           mkdir -p dist
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
