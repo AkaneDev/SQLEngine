@@ -24,7 +24,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install -y build-essential libsdl2-dev sqlite3
+          sudo apt install -y \
+            build-essential \
+            libsdl2-dev \
+            libsqlite3-dev
 
       # ---------------- macOS ----------------
       - name: Install dependencies (macOS)
@@ -49,12 +52,17 @@ jobs:
       # ---------------- BUILD ----------------
       - name: Build (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: make
+        run: |
+          export CXXFLAGS="$(sdl2-config --cflags) -std=c++17 -O2 -Iinclude"
+          export LDFLAGS="$(sdl2-config --libs) -lsqlite3"
+          make
 
       - name: Build (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           export PATH="/opt/homebrew/bin:$PATH"
+          export CXXFLAGS="$(sdl2-config --cflags) -std=c++17 -O2 -Iinclude"
+          export LDFLAGS="$(sdl2-config --libs) -lsqlite3"
           make
 
       - name: Build (Windows)
@@ -72,8 +80,11 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
+
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp sqlEngine.exe dist/sqlEngine-windows.exe
+            cp /mingw64/bin/SDL2.dll dist/
+            cp /mingw64/bin/libsqlite3-0.dll dist/
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
             cp sqlEngine dist/sqlEngine-macos
           else
@@ -98,7 +109,7 @@ jobs:
         with:
           path: artifacts
 
-      - name: Create release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: artifacts/**/*
