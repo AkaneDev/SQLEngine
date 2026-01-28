@@ -1,0 +1,63 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------- Linux ----------
+      - name: Install deps (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt update && sudo apt install -y build-essential libsdl2-dev
+
+      # ---------- macOS ----------
+      - name: Install deps (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install sdl2
+
+      # ---------- Windows (MSYS2) ----------
+      - name: Install deps (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          install: >
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-SDL2
+            make
+
+      - name: Build (Unix)
+        if: matrix.os != 'windows-latest'
+        run: make
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: make
+
+      - name: Package
+        run: |
+          mkdir dist
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp sqlEngine.exe dist/sqlEngine-windows.exe
+          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+            cp sqlEngine dist/sqlEngine-macos
+          else
+            cp sqlEngine dist/sqlEngine-linux
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqlEngine-${{ matrix.os }}
+          path: dist/*
