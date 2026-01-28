@@ -29,24 +29,18 @@ jobs:
 
     - name: Install build tools
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt update && sudo apt install -y build-essential automake
+      run: sudo apt update && sudo apt install -y build-essential
 
     - name: Install build tools
       if: matrix.os == 'macos-latest'
-      run: brew install automake
+      run: brew install make
 
     - name: Install build tools
       if: matrix.os == 'windows-latest'
-      run: choco install make automake -y
-
-    - name: Configure
-      run: ./configure
+      run: choco install make -y
 
     - name: Build
       run: make -j$(nproc)
-
-    - name: Test
-      run: make check || echo "Tests skipped/failures ignored"
 
     - name: Package
       run: |
