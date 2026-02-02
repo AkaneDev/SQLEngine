@@ -1,6 +1,7 @@
 -- ====================================================
 -- SQL Snake Game
 -- Fully working: growth, self-collision, edge wrapping
+-- Author: AkaneDev
 -- ====================================================
 
 -- FRAMEBUFFER: 32x32 monochrome screen
