@@ -93,15 +93,28 @@ jobs:
         run: |
           mkdir -p dist
           cp build/sqlEngine.exe dist/sqlEngine-windows.exe
-          cp /mingw64/bin/SDL*.dll dist/
+          
+          # App deps
+          cp /mingw64/bin/SDL2.dll dist/
           cp /mingw64/bin/libsqlite3-0.dll dist/
+          
+          # MinGW runtime deps (THE IMPORTANT PART)
+          cp /mingw64/bin/libwinpthread-1.dll dist/
+          cp /mingw64/bin/libgcc_s_seh-1.dll dist/
+          cp /mingw64/bin/libstdc++-6.dll dist/
 
       - name: Zip Windows build
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          Compress-Archive -Path dist\sqlEngine-windows.exe,dist\SDL2.dll,dist\libsqlite3-0.dll `
-                           -DestinationPath dist\sqlEngine-windows.zip
+           Compress-Archive -Path `
+            dist\sqlEngine-windows.exe, `
+            dist\SDL2.dll, `
+            dist\libsqlite3-0.dll, `
+            dist\libwinpthread-1.dll, `
+            dist\libgcc_s_seh-1.dll, `
+            dist\libstdc++-6.dll `
+            -DestinationPath dist\sqlEngine-windows.zip
 
       # ---------------- UPLOAD ARTIFACTS ----------------
       - name: Upload build artifacts
