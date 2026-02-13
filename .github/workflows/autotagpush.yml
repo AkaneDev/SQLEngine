@@ -3,7 +3,7 @@ name: Auto Tag Push
 # Trigger when the cmake-multi-platform workflow completes
 on:
   workflow_run:
-    workflows: ["cmake-multi-platform"]
+    workflows: ["CMake Build & Release"]
     types:
       - completed
 
