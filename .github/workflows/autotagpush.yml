@@ -1,0 +1,52 @@
+name: Auto Tag Push
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # important to get full history and tags
+
+      - name: Get latest tag
+        id: tag
+        run: |
+          latest=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          echo "latest_tag=$latest" >> $GITHUB_OUTPUT
+
+      - name: Determine new version
+        id: version
+        run: |
+          latest=${{ steps.tag.outputs.latest_tag }}
+          major=$(echo $latest | cut -d. -f1 | tr -d 'v')
+          minor=$(echo $latest | cut -d. -f2)
+          patch=$(echo $latest | cut -d. -f3)
+
+          commit_msg=$(git log -1 --pretty=%B)
+
+          if [[ "$commit_msg" == *"bump minor"* ]]; then
+            minor=$((minor + 1))
+            patch=0
+          elif [[ "$commit_msg" == *"bump major"* ]]; then
+            major=$((major + 1))
+            minor=0
+            patch=0
+          else
+            patch=$((patch + 1))
+          fi
+
+          new_tag="v$major.$minor.$patch"
+          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+          echo "New tag will be $new_tag"
+
+      - name: Create new tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag ${{ steps.version.outputs.new_tag }}
+          git push origin ${{ steps.version.outputs.new_tag }}
