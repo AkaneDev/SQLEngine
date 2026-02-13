@@ -1,24 +1,32 @@
 name: Auto Tag Push
 
+# Trigger when the cmake-multi-platform workflow completes
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["cmake-multi-platform"]
+    types:
+      - completed
 
 jobs:
   tag:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      # Checkout the repo with full history and tags
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # important to get full history and tags
+          fetch-depth: 0
 
+      # Get the latest tag
       - name: Get latest tag
         id: tag
         run: |
           latest=$(git describe --tags --abbrev=0 || echo "v0.0.0")
           echo "latest_tag=$latest" >> $GITHUB_OUTPUT
 
+      # Determine the new version based on the last commit message
       - name: Determine new version
         id: version
         run: |
@@ -44,9 +52,19 @@ jobs:
           echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
           echo "New tag will be $new_tag"
 
-      - name: Create new tag
+      # Configure git
+      - name: Configure Git
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git tag ${{ steps.version.outputs.new_tag }}
-          git push origin ${{ steps.version.outputs.new_tag }}
+
+      # Push the new tag using the GitHub token
+      - name: Push new tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          new_tag=${{ steps.version.outputs.new_tag }}
+          git tag "$new_tag"
+          # Use token authentication to push
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          git push origin "$new_tag"
