@@ -47,3 +47,12 @@ UPDATE framebuffer SET pixel = 1 WHERE x = 5 AND y = 10;
 - Each game uses `{GameName}.db` to store all game data.
 - Framebuffer, input, and game state are all saved here, allowing the game to resume from the last state.
 
+### Eamples
+<details>
+  <summary>Snake in SQL</summary>
+
+  ![Snake game](readmeAssets/Snake.png "Snake game in SQL Engine")
+
+</details>
+
+
