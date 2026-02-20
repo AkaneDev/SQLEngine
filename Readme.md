@@ -5,6 +5,8 @@ The game data is saved to {GameName}.db, along with screendata
 
 [![CMake Build & Release](https://github.com/AkaneDev/SQLEngine/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/AkaneDev/SQLEngine/actions/workflows/cmake-multi-platform.yml)
 
+[WASM Build](https://github.com/AkaneDev-Labs/SQLEngine-wasm)
+
 ## How to write your game
 This engine is mono threaded due to me not wanting to deal with trying to load and run multiple sql 'scripts'
 the game scripts are just plain .sql files
