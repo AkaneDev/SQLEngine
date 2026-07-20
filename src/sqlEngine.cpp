@@ -23,6 +23,16 @@ std::string readFile(const std::string& filename) {
     return buffer.str();
 }
 
+void setColourFromPixel(SDL_Renderer* renderer, int pixel)
+{
+    // RGB332 colour conversion
+    int r = ((pixel >> 5) & 0b111) * 255 / 7;
+    int g = ((pixel >> 2) & 0b111) * 255 / 7;
+    int b = (pixel & 0b11) * 255 / 3;
+
+    SDL_SetRenderDrawColor(renderer, r, g, b, 255);
+}
+
 // Fetch framebuffer into 2D array
 void fetchFramebuffer(sqlite3* db, std::vector<std::vector<int>>& screen) {
     const char* query = "SELECT x, y, pixel FROM framebuffer;";
@@ -137,11 +147,23 @@ int main(int argc, char* argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // black background
         SDL_RenderClear(renderer);
 
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // white pixels
         for (int y = 0; y < SCREEN_HEIGHT; y++) {
             for (int x = 0; x < SCREEN_WIDTH; x++) {
-                if (screen[y][x]) {
-                    SDL_Rect r = { x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE };
+
+                int pixel = screen[y][x];
+
+                // 0 is transparent/background
+                if (pixel != 0) {
+
+                    setColourFromPixel(renderer, pixel);
+
+                    SDL_Rect r = {
+                        x * PIXEL_SIZE,
+                        y * PIXEL_SIZE,
+                        PIXEL_SIZE,
+                        PIXEL_SIZE
+                    };
+
                     SDL_RenderFillRect(renderer, &r);
                 }
             }
