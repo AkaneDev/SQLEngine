@@ -1,6 +1,6 @@
 # SQL Game Engine
 A game engine written in CPP with the game scripts written in SQL
-The game screen is a simple 32 by 32 monochrome screen in a database table
+The game screen is a simple 32 by 32 monochrome screen in a database table (working on color)
 The game data is saved to {GameName}.db, along with screendata
 
 [![CMake Build & Release](https://github.com/AkaneDev/SQLEngine/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/AkaneDev/SQLEngine/actions/workflows/cmake-multi-platform.yml)
